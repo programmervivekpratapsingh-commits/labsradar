@@ -1,0 +1,170 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PATIENT
+  LAB
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum BookingType {
+  IN_LAB
+  HOME_VISIT
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  phone         String?
+  password      String?
+  role          Role      @default(PATIENT)
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  bookings      Booking[]
+  lab           Lab?
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Lab {
+  id         String    @id @default(cuid())
+  name       String
+  address    String
+  city       String
+  pincode    String
+  phone      String
+  email      String    @unique
+  nablNumber String    @unique
+  isApproved Boolean   @default(false)
+  isActive   Boolean   @default(true)
+  rating     Float?
+  imageUrl   String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  managerId  String?   @unique
+  manager    User?     @relation(fields: [managerId], references: [id])
+  labTests   LabTest[]
+  bookings   Booking[]
+}
+
+model Test {
+  id          String    @id @default(cuid())
+  name        String
+  category    String
+  description String?
+  preparation String?
+  duration    String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  labTests    LabTest[]
+}
+
+model LabTest {
+  id          String    @id @default(cuid())
+  price       Float
+  discount    Float     @default(0)
+  isAvailable Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  labId       String
+  lab         Lab       @relation(fields: [labId], references: [id])
+  testId      String
+  test        Test      @relation(fields: [testId], references: [id])
+  bookings    Booking[]
+
+  @@unique([labId, testId])
+}
+
+model Booking {
+  id            String        @id @default(cuid())
+  bookingDate   DateTime
+  type          BookingType   @default(IN_LAB)
+  status        BookingStatus @default(PENDING)
+  paymentStatus PaymentStatus @default(PENDING)
+  totalAmount   Float
+  address       String?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  patientId     String
+  patient       User          @relation(fields: [patientId], references: [id])
+  labId         String
+  lab           Lab           @relation(fields: [labId], references: [id])
+  labTestId     String
+  labTest       LabTest       @relation(fields: [labTestId], references: [id])
+  payment       Payment?
+}
+
+model Payment {
+  id                String        @id @default(cuid())
+  amount            Float
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  status            PaymentStatus @default(PENDING)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  bookingId         String        @unique
+  booking           Booking       @relation(fields: [bookingId], references: [id])
+}
