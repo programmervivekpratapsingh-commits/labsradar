@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import PayButton from "./PayButton";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,6 @@ export default async function ConfirmPage({
   if (!session) redirect("/login");
   if (!id) redirect("/dashboard");
 
-  // Ownership check: only the patient who made the booking can see it
   const booking = await prisma.booking.findFirst({
     where: { id, patientId: session.user.id },
     include: { lab: true, labTest: { include: { test: true } } },
@@ -31,9 +31,13 @@ export default async function ConfirmPage({
     timeStyle: "short",
   });
 
+  const canPay = booking.paymentStatus === "PENDING" && booking.status !== "CANCELLED";
+
   return (
     <main className="max-w-2xl mx-auto p-6">
-      <h1 className="text-3xl font-bold">Booking received</h1>
+      <h1 className="text-3xl font-bold">
+        {booking.paymentStatus === "PAID" ? "Booking confirmed" : "Complete your booking"}
+      </h1>
       <p className="text-gray-600 mt-1">Reference: {booking.id}</p>
 
       <div className="mt-6 border rounded-xl bg-white p-5 space-y-2">
@@ -49,9 +53,17 @@ export default async function ConfirmPage({
         <p><strong>Status:</strong> {booking.status} (payment {booking.paymentStatus})</p>
       </div>
 
-      <p className="text-sm text-gray-600 mt-4">
-        Online payment is coming in the next step, so for now your booking is saved as pending.
-      </p>
+      {canPay && (
+        <div className="mt-6">
+          <PayButton
+            bookingId={booking.id}
+            amountLabel={rupee(booking.totalAmount)}
+            name={session.user.name ?? ""}
+            email={session.user.email ?? ""}
+          />
+          <p className="text-xs text-gray-500 mt-2">Test mode: no real money is charged.</p>
+        </div>
+      )}
 
       <div className="mt-6 flex gap-3">
         <Link href="/dashboard" className="bg-gray-900 text-white rounded-lg px-4 py-2">My dashboard</Link>
