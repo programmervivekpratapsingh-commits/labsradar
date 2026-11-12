@@ -10,7 +10,7 @@ const rupee = (n: number) => "\u20B9" + Math.round(n).toLocaleString("en-IN");
 export default async function DashboardPage() {
   const session = await auth();
   if (!session) redirect("/login");
-  if (session.user.role === "LAB") redirect("/lab/bookings");
+  if (session.user.role === "LAB") redirect("/lab/dashboard");
   if (session.user.role === "ADMIN") redirect("/admin/dashboard");
 
   const bookings = await prisma.booking.findMany({
@@ -81,4 +81,5 @@ export default async function DashboardPage() {
     </main>
   );
 }
+
 
