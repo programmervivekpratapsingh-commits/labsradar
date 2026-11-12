@@ -42,7 +42,7 @@ export default async function AdminLabsPage() {
       <Link href="/admin/dashboard" className="text-sm text-teal-700 underline">
         Admin dashboard
       </Link>
-      <h1 className="text-2xl font-bold mt-2">Labs</h1>
+      <div className="flex items-center justify-between mt-2"><h1 className="text-2xl font-bold">Labs</h1><Link href="/admin/labs/new" className="bg-teal-600 text-white rounded-lg px-3 py-1.5 text-sm">Add a lab</Link></div>
       <p className="text-sm text-gray-600">
         Check each lab&apos;s NABL certificate before approving. Patients only see labs that are
         approved and active.
@@ -109,3 +109,4 @@ export default async function AdminLabsPage() {
     </main>
   );
 }
+
