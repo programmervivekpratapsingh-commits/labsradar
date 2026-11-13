@@ -12,7 +12,7 @@ const SLOTS = [
   { value: "18:00", label: "6:00 PM" },
 ];
 
-export default function BookingForm({ labTestId }: { labTestId: string }) {
+export default function BookingForm({ labTestIds }: { labTestIds: string[] }) {
   const router = useRouter();
   const [type, setType] = useState<"IN_LAB" | "HOME_VISIT">("IN_LAB");
   const [error, setError] = useState("");
@@ -30,7 +30,7 @@ export default function BookingForm({ labTestId }: { labTestId: string }) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        labTestId,
+        labTestIds,
         type,
         date: String(form.get("date")),
         slot: String(form.get("slot")),
@@ -116,3 +116,4 @@ export default function BookingForm({ labTestId }: { labTestId: string }) {
     </form>
   );
 }
+

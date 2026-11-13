@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 
 const SLOTS = ["07:00", "09:00", "11:00", "14:00", "16:00", "18:00"];
 const MAX_DAYS_AHEAD = 60;
+const MAX_TESTS = 10;
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -16,10 +17,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
-  const { labTestId, type, date, slot, address, notes } = body;
+  const { labTestIds, type, date, slot, address, notes } = body;
 
   if (
-    !labTestId ||
+    !Array.isArray(labTestIds) ||
+    labTestIds.length < 1 ||
+    labTestIds.length > MAX_TESTS ||
+    !labTestIds.every((x: unknown) => typeof x === "string") ||
     !["IN_LAB", "HOME_VISIT"].includes(type) ||
     !/^\d{4}-\d{2}-\d{2}$/.test(String(date)) ||
     !SLOTS.includes(slot)
@@ -31,7 +35,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Please enter your full collection address" }, { status: 400 });
   }
 
-  // Build the appointment time in India Standard Time
   const when = new Date(date + "T" + slot + ":00+05:30");
   const now = Date.now();
   if (isNaN(when.getTime()) || when.getTime() <= now) {
@@ -41,16 +44,33 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Bookings open up to " + MAX_DAYS_AHEAD + " days ahead" }, { status: 400 });
   }
 
-  const labTest = await prisma.labTest.findUnique({
-    where: { id: String(labTestId) },
-    include: { lab: true },
+  const ids = Array.from(new Set(labTestIds as string[]));
+  const labTests = await prisma.labTest.findMany({
+    where: { id: { in: ids } },
+    include: { lab: true, test: true },
   });
-  if (!labTest || !labTest.isAvailable || !labTest.lab.isApproved || !labTest.lab.isActive) {
-    return NextResponse.json({ error: "This test is not available right now" }, { status: 404 });
+
+  if (labTests.length !== ids.length) {
+    return NextResponse.json({ error: "One of these tests is no longer available" }, { status: 404 });
   }
 
-  // The price is calculated on the server, never taken from the browser
-  const totalAmount = Math.round(labTest.price * (1 - labTest.discount / 100));
+  const lab = labTests[0].lab;
+  if (!lab.isApproved || !lab.isActive || labTests.some((lt) => lt.labId !== lab.id || !lt.isAvailable)) {
+    return NextResponse.json(
+      { error: "All tests must be available at the same lab" },
+      { status: 400 }
+    );
+  }
+
+  // Prices come from OUR database, never from the browser
+  const items = labTests.map((lt) => ({
+    labTestId: lt.id,
+    testName: lt.test.name,
+    price: lt.price,
+    discount: lt.discount,
+    amount: Math.round(lt.price * (1 - lt.discount / 100)),
+  }));
+  const totalAmount = items.reduce((sum, i) => sum + i.amount, 0);
 
   const booking = await prisma.booking.create({
     data: {
@@ -59,11 +79,12 @@ export async function POST(req: Request) {
       totalAmount,
       address: type === "HOME_VISIT" ? String(address).trim() : null,
       notes: notes ? String(notes).trim().slice(0, 500) : null,
-      patientId: session.user.id,
-      labId: labTest.labId,
-      labTestId: labTest.id,
+      patient: { connect: { id: session.user.id } },
+      lab: { connect: { id: lab.id } },
+      items: { create: items },
     },
   });
 
   return NextResponse.json({ id: booking.id }, { status: 201 });
 }
+

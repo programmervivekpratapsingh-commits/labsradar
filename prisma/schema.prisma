@@ -185,3 +185,4 @@ model BookingItem {
 
   @@index([bookingId])
 }
+

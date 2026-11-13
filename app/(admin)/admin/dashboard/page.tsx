@@ -25,7 +25,7 @@ export default async function AdminDashboardPage() {
       prisma.booking.findMany({
         take: 8,
         orderBy: { createdAt: "desc" },
-        include: { patient: true, lab: true, labTest: { include: { test: true } } },
+        include: { patient: true, lab: true, items: true },
       }),
     ]);
 
@@ -75,7 +75,7 @@ export default async function AdminDashboardPage() {
         {recent.map((b) => (
           <div key={b.id} className="border rounded-xl bg-white p-4 flex items-start justify-between gap-4">
             <div>
-              <p className="font-semibold">{b.labTest.test.name}</p>
+              <p className="font-semibold">{b.items.map((i) => i.testName).join(", ")}</p>
               <p className="text-sm text-gray-600">
                 {b.patient.name} at {b.lab.name}
               </p>
@@ -99,3 +99,4 @@ export default async function AdminDashboardPage() {
     </main>
   );
 }
+

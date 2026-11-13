@@ -53,7 +53,7 @@ export default async function LabBookingsPage() {
 
   const bookings = await prisma.booking.findMany({
     where: { labId: lab.id },
-    include: { patient: true, labTest: { include: { test: true } } },
+    include: { patient: true, items: true },
     orderBy: { bookingDate: "asc" },
   });
 
@@ -65,7 +65,7 @@ export default async function LabBookingsPage() {
       <div className="border rounded-xl bg-white p-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="font-semibold">{b.labTest.test.name}</h3>
+            <h3 className="font-semibold">{b.items.map((i) => i.testName).join(", ")}</h3>
             <p className="text-sm text-gray-600">
               {b.bookingDate.toLocaleString("en-IN", {
                 timeZone: "Asia/Kolkata",
@@ -131,3 +131,4 @@ export default async function LabBookingsPage() {
     </main>
   );
 }
+

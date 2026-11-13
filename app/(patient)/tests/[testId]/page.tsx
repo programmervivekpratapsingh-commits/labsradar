@@ -103,7 +103,7 @@ export default async function TestDetailPage({
                 {o.lab.address}, {o.lab.city} {o.lab.pincode}
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                NABL certified{o.lab.rating ? " \u00B7 Rated " + o.lab.rating : ""}
+                NABL certified{o.lab.rating ? " \u00B7 Rated " + o.lab.rating : ""}{" \u00B7 "}<Link href={"/labs/" + o.lab.id} className="text-teal-700 underline">All tests at this lab</Link>
               </p>
             </div>
 
@@ -131,3 +131,4 @@ export default async function TestDetailPage({
     </main>
   );
 }
+

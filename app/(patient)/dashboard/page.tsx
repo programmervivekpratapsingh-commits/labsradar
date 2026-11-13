@@ -15,7 +15,7 @@ export default async function DashboardPage() {
 
   const bookings = await prisma.booking.findMany({
     where: { patientId: session.user.id },
-    include: { lab: true, labTest: { include: { test: true } } },
+    include: { lab: true, items: true },
     orderBy: { bookingDate: "desc" },
   });
 
@@ -58,7 +58,7 @@ export default async function DashboardPage() {
           >
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h3 className="font-semibold">{b.labTest.test.name}</h3>
+                <h3 className="font-semibold">{b.items.map((i) => i.testName).join(", ")}</h3>
                 <p className="text-sm text-gray-600">{b.lab.name}, {b.lab.city}</p>
                 <p className="text-sm text-gray-600 mt-1">
                   {b.bookingDate.toLocaleString("en-IN", {
@@ -81,5 +81,6 @@ export default async function DashboardPage() {
     </main>
   );
 }
+
 
 

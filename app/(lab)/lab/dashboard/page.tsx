@@ -34,7 +34,7 @@ export default async function LabDashboardPage() {
     await Promise.all([
       prisma.booking.findMany({
         where: { labId: lab.id, status: active, bookingDate: { gte: dayStart, lt: dayEnd } },
-        include: { patient: true, labTest: { include: { test: true } } },
+        include: { patient: true, items: true },
         orderBy: { bookingDate: "asc" },
       }),
       prisma.booking.count({ where: { labId: lab.id, status: "PENDING", paymentStatus: "PENDING" } }),
@@ -117,7 +117,7 @@ export default async function LabDashboardPage() {
                   hour: "numeric",
                   minute: "2-digit",
                 })}{" "}
-                &middot; {b.labTest.test.name}
+                &middot; {b.items.map((i) => i.testName).join(", ")}
               </p>
               <p className="text-sm text-gray-600">
                 {b.patient.name}
@@ -139,3 +139,4 @@ export default async function LabDashboardPage() {
     </main>
   );
 }
+

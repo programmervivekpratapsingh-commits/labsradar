@@ -21,7 +21,7 @@ export default async function ConfirmPage({
 
   const booking = await prisma.booking.findFirst({
     where: { id, patientId: session.user.id },
-    include: { lab: true, labTest: { include: { test: true } } },
+    include: { lab: true, items: true },
   });
   if (!booking) notFound();
 
@@ -41,7 +41,17 @@ export default async function ConfirmPage({
       <p className="text-gray-600 mt-1">Reference: {booking.id}</p>
 
       <div className="mt-6 border rounded-xl bg-white p-5 space-y-2">
-        <p><strong>Test:</strong> {booking.labTest.test.name}</p>
+        <div>
+          <strong>Tests:</strong>
+          <ul className="mt-1 space-y-1">
+            {booking.items.map((i) => (
+              <li key={i.id} className="flex justify-between text-sm">
+                <span>{i.testName}</span>
+                <span>{rupee(i.amount)}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
         <p><strong>Lab:</strong> {booking.lab.name}, {booking.lab.city}</p>
         <p><strong>When:</strong> {when}</p>
         <p>
@@ -72,3 +82,5 @@ export default async function ConfirmPage({
     </main>
   );
 }
+
+
