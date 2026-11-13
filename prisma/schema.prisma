@@ -151,8 +151,10 @@ model Booking {
   patient       User          @relation(fields: [patientId], references: [id])
   labId         String
   lab           Lab           @relation(fields: [labId], references: [id])
-  labTestId     String
-  labTest       LabTest       @relation(fields: [labTestId], references: [id])
+  labTestId     String?
+  labTest       LabTest?       @relation(fields: [labTestId], references: [id])
+  items         BookingItem[]
+
   payment       Payment?
 }
 
@@ -167,4 +169,19 @@ model Payment {
 
   bookingId         String        @unique
   booking           Booking       @relation(fields: [bookingId], references: [id])
+}
+
+
+model BookingItem {
+  id        String   @id @default(cuid())
+  bookingId String
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  labTestId String
+  testName  String
+  price     Float
+  discount  Float
+  amount    Float
+  createdAt DateTime @default(now())
+
+  @@index([bookingId])
 }
