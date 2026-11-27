@@ -37,6 +37,7 @@ model User {
   email         String    @unique
   phone         String?
   password      String?
+  mustChangePassword Boolean @default(false)
   role          Role      @default(PATIENT)
   emailVerified DateTime?
   image         String?
@@ -185,4 +186,5 @@ model BookingItem {
 
   @@index([bookingId])
 }
+
 

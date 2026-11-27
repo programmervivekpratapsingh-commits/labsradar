@@ -54,7 +54,7 @@ export async function createLab(
   try {
     await prisma.$transaction(async (tx) => {
       const manager = await tx.user.create({
-        data: { name: managerName, email: managerEmail, password: hash, role: "LAB" },
+        data: { name: managerName, email: managerEmail, password: hash, role: "LAB", mustChangePassword: true },
       });
       await tx.lab.create({
         data: {
@@ -77,3 +77,4 @@ export async function createLab(
 
   return { created: { labName: name, managerEmail, password } };
 }
+

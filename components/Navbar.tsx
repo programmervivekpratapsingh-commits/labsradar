@@ -26,7 +26,7 @@ export default async function Navbar() {
             <>
               <Link href={home} className="hover:text-teal-700">
                 {homeLabel}
-              </Link>
+              </Link><Link href="/account/password" className="hover:text-teal-700">Password</Link>
               <form
                 action={async () => {
                   "use server";
@@ -51,3 +51,4 @@ export default async function Navbar() {
     </header>
   );
 }
+
